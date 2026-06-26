@@ -1,0 +1,20 @@
+{
+  "name": "web-app",
+  "version": "0.0.0",
+  "homepage": "https://yelanshands.github.io/auramaxxing/",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "dependencies": {
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "react-scripts": "^5.0.0"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
+  }
+}
