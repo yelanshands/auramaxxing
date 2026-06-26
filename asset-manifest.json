@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/auramaxxing/static/css/main.2cb9a270.css",
+    "main.js": "/auramaxxing/static/js/main.0e971d4e.js",
+    "index.html": "/auramaxxing/index.html",
+    "main.2cb9a270.css.map": "/auramaxxing/static/css/main.2cb9a270.css.map",
+    "main.0e971d4e.js.map": "/auramaxxing/static/js/main.0e971d4e.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.2cb9a270.css",
+    "static/js/main.0e971d4e.js"
+  ]
+}
