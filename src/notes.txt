@@ -1,4 +1,26 @@
 to-do !!!
-- save connected to endpoint (call api and pass in blocks & print/load)
-- mock request 
 - textures
+
+6-Week Retrospective
+CAMS Summer SWE Mentorship
+
+What went well? 
+- the app works and has been deployed with vercel
+
+What did not go well?
+- performance issues with adding more grid squares
+- reading and understanding others' code was difficult for me at first
+    (took a while for me to get the hang of react)
+- i initially had trouble with hosting the project locally because of
+    how my project folder was organized
+
+What would you do differently?
+- organize my files and code better from the beginning to follow a
+    standardized format and so that it would be easier locate the 
+    code that i need to modify
+
+List and explain 2 things you learned from building your project
+
+
+Commitments for the rest of the summer
+

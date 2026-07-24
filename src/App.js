@@ -188,7 +188,7 @@ function Outline({ position, rotation }) {
 
 function BuildMenu({ currentBuildID, onBuildSelect }) {
     const { viewport } = useThree()
-    const startXPos = -10
+    const startXPos = -8
     const startYPos = 6
 
     return (
@@ -229,7 +229,7 @@ function BuildIcon({ id, type, index, onBuildSelect, currentBuildID }) {
 
 function Palette({ currentBlock, onBlockSelect }) {
     const { viewport } = useThree()
-    const startXPos = 9
+    const startXPos = 7
     const startYPos = 6
 
     return (
