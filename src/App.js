@@ -307,7 +307,7 @@ export default function App() {
             const newBlocks = currentBuild.blocks.map((block) => 
                 (block.type === currentBlock) ? {...block, type: type} : block)
             
-            console.log(newBlocks)
+            //console.log(newBlocks)
             updateBuilds(currentBuild.id, newBlocks)
         }
     }
@@ -315,7 +315,6 @@ export default function App() {
     function updateBuilds(id, blocks) {
         setBuilds((builds) => builds.map((build) => 
             (build.id === id) ? {...build, blocks: blocks, version: build.version + 1} : build))
-        sendData({id: id, blocks: blocks})
     }
 
     async function sendData(data) {
@@ -352,7 +351,9 @@ export default function App() {
                     currentBlock={currentBlock} 
                     onBlockSelect={(type, button) => selectBlock(type, button)} 
                     currentBuildID={currentBuildID} 
-                    onBuildSelect={(id) => selectBuildID(id)} />            
+                    onBuildSelect={(id) => {
+                        sendData(currentBuild)
+                        selectBuildID(id)} } />            
             </Canvas>
         </div>
     )
