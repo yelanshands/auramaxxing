@@ -188,7 +188,7 @@ function Outline({ position, rotation }) {
 
 function BuildMenu({ currentBuildID, onBuildSelect }) {
     const { viewport } = useThree()
-    const startXPos = -8
+    const startXPos = -10
     const startYPos = 6
 
     return (
@@ -229,7 +229,7 @@ function BuildIcon({ id, type, index, onBuildSelect, currentBuildID }) {
 
 function Palette({ currentBlock, onBlockSelect }) {
     const { viewport } = useThree()
-    const startXPos = 5
+    const startXPos = 9
     const startYPos = 6
 
     return (
@@ -315,6 +315,25 @@ export default function App() {
     function updateBuilds(id, blocks) {
         setBuilds((builds) => builds.map((build) => 
             (build.id === id) ? {...build, blocks: blocks, version: build.version + 1} : build))
+        sendData({id: id, blocks: blocks})
+    }
+
+    async function sendData(data) {
+        try {
+            const res = await fetch('/api/build', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({data: data}), 
+            })
+
+            const response = await res.json()
+            console.log(response)
+
+        } catch (error) {
+            console.error("Error sending request: ", error)
+        }
     }
 
     return (
