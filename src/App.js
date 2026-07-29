@@ -291,7 +291,15 @@ export default function App() {
 
     const [currentBlock, setCurrentBlock] = useState('white')
     
-    const [builds, setBuilds] = useState([])
+    const [builds, setBuilds] = useState([
+        {   
+            id: "test1",
+            title: "test2",
+            blocks: [],
+            version: 0,
+            created_at: "2026-07-29T12:00:00.000000+00:00"
+        }
+    ])
 
     useEffect(() => {
         async function getBuilds() {
