@@ -297,6 +297,7 @@ export default function App() {
         async function getBuilds() {
             const { data: dataBuilds } = await supabase.from('builds').select()
             if (dataBuilds) {
+                console.log(dataBuilds)
                 setBuilds(dataBuilds)
             }
         }
