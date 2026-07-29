@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, OrthographicCamera, Outlines , Hud } from '@react-three/drei'
+import { supabase } from './utils/supabase'
 
 function Build({ gridSize, currentBlock, currentBuild, setBuilds }) {
     const [blocks, setBlocks] = useState(currentBuild.blocks)
@@ -290,12 +291,19 @@ export default function App() {
 
     const [currentBlock, setCurrentBlock] = useState('white')
     
-    const [builds, setBuilds] = useState([
-        {id: '0', blocks: [], version: 0}, 
-        {id: '1', blocks: [], version: 0}, 
-        {id: '2', blocks: [], version: 0} 
-    ])
-    const [currentBuildID, selectBuildID] = useState('0')
+    const [builds, setBuilds] = useState([])
+
+    useEffect(() => {
+        async function getBuilds() {
+            const { data: dataBuilds } = await supabase.from('builds').select()
+            if (dataBuilds) {
+                setBuilds(dataBuilds)
+            }
+        }
+        getBuilds()
+    }, [])
+
+    const [currentBuildID, selectBuildID] = useState(builds[0].id)
     const currentBuild = builds.find((build) => 
         build.id === currentBuildID) || builds[0]
     const currentVersion = currentBuild.version
