@@ -303,8 +303,11 @@ export default function App() {
 
     useEffect(() => {
         async function getBuilds() {
-            const { data: dataBuilds } = await supabase.from('builds').select()
-            if (dataBuilds) {
+            const { data: dataBuilds, error } = await supabase.from('builds').select()
+            if (error) {
+                console.error("Supabase Error:", error.message)
+                return
+            } else if (dataBuilds) {
                 console.log(dataBuilds)
                 setBuilds(dataBuilds)
             }
