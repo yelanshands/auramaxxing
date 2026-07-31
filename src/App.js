@@ -28,7 +28,7 @@ function Build({ gridSize, currentBlock, currentBuild, setBuilds }) {
             for (let i = 0; i < blocks.length; i++) {
                 if (blocks[i].pos[0] === roundedPos[0] && 
                     blocks[i].pos[1] === roundedPos[1] && 
-                    blocks[i].pos[2] == roundedPos[2]) {
+                    blocks[i].pos[2] === roundedPos[2]) {
 
                     newBlocks = blocks.toSpliced(i, 1)
                     break
@@ -195,16 +195,24 @@ function Outline({ position, rotation }) {
     )
 }
 
-function BuildMenu({ currentBuildID, onBuildSelect }) {
+function BuildMenu({ builds, currentBuildID, onBuildSelect }) {
     const { viewport } = useThree()
     const startXPos = -8
     const startYPos = 6
 
     return (
         <group position={[startXPos, startYPos, 0]}>
-            <BuildIcon id='0' type='orange' index={0} onBuildSelect={(id) => onBuildSelect(id)} currentBuildID={currentBuildID} />
-            <BuildIcon id='1' type='white' index={1} onBuildSelect={(id) => onBuildSelect(id)} currentBuildID={currentBuildID} />
-            <BuildIcon id='2' type='pink' index={2} onBuildSelect={(id) => onBuildSelect(id)} currentBuildID={currentBuildID} />
+            {
+                builds?.map((build, i) => (
+                    <BuildIcon 
+                        key={build.id}
+                        id={build.id}
+                        type={build.blocks[0]?.type || "white"} 
+                        index={i} 
+                        onBuildSelect={(id) => onBuildSelect(id)} 
+                        currentBuildID={currentBuildID} />
+                ))
+            }
         </group>
     )
 }
@@ -401,6 +409,7 @@ export default function App() {
                     setBuilds={(id, blocks) => updateBuilds(id, blocks)} />
                 <OrbitControls enableZoom={true} />
                 <BigHUD 
+                    builds={builds}
                     currentBlock={currentBlock} 
                     onBlockSelect={(type, button) => selectBlock(type, button)} 
                     currentBuildID={currentBuildID} 
