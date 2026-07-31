@@ -71,7 +71,7 @@ function Build({ gridSize, currentBlock, currentBuild, setBuilds }) {
                             type={block.type} 
                             grid={false} 
                             mouseState={mouseState} 
-                            onAction={(pos, type, action) => handleAction(pos, type, action)} 
+                            onAction={(pos, action) => handleAction(pos, action)} 
                             onMouseStateChange={(button) => handleMouseState(button)} />
                     ))
                 }
@@ -119,9 +119,16 @@ function Cube({ position, type, grid, mouseState, onAction, onMouseStateChange})
     }
 
     function handlePointerClick(event, drag=false) {
-        handlePointerMove(event)
-        if (currentFaceNorm && (!grid || (grid && (drag ? mouseState : event.button) === 2))) { 
-            onAction(((drag ? mouseState : event.button) === 2 ? ((grid && currentFaceNorm.y < 0) ? cubePos : getFacePos(1)) : cubePos), (drag ? event.buttons : event.button)) 
+        event.stopPropagation()
+        const faceNorm = event.face?.normal || currentFaceNorm
+        if (!faceNorm) return
+
+        if (!grid || (grid && (drag ? mouseState : event.button) === 2)) { 
+            const targetPos = ((drag ? mouseState : event.button) === 2 
+                ? ((grid && faceNorm.y < 0) ? cubePos : getFacePos(1)) 
+                : cubePos)
+                
+            onAction(targetPos, (drag ? event.buttons : event.button)) 
             setCurrentFaceNorm(null)
         }
     }
@@ -307,7 +314,7 @@ export default function App() {
             if (error) {
                 console.error("Supabase Error:", error.message)
                 return
-            } else if (dataBuilds) {
+            } else if (dataBuilds && dataBuilds.length > 0) {
                 console.log(dataBuilds)
                 setBuilds(dataBuilds)
             }
