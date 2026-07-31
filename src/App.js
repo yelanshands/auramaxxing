@@ -21,13 +21,14 @@ function Build({ gridSize, currentBlock, currentBuild, setBuilds }) {
     }
 
     function handleAction(pos, action) {
+        const roundedPos = pos.map(coord => Math.round(coord))
         let newBlocks = blocks.slice()
 
         if (action === 0) {
             for (let i = 0; i < blocks.length; i++) {
-                if (blocks[i].pos[0] === pos[0] && 
-                    blocks[i].pos[1] === pos[1] && 
-                    blocks[i].pos[2] == pos[2]) {
+                if (blocks[i].pos[0] === roundedPos[0] && 
+                    blocks[i].pos[1] === roundedPos[1] && 
+                    blocks[i].pos[2] == roundedPos[2]) {
 
                     newBlocks = blocks.toSpliced(i, 1)
                     break
@@ -35,9 +36,9 @@ function Build({ gridSize, currentBlock, currentBuild, setBuilds }) {
             }
         } else if (action === 2) {
             for (const block of blocks) {
-                if ((block.pos[0] === pos[0] && 
-                    block.pos[1] === pos[1] && 
-                    block.pos[2] == pos[2]) || 
+                if ((block.pos[0] === roundedPos[0] && 
+                    block.pos[1] === roundedPos[1] && 
+                    block.pos[2] == roundedPos[2]) || 
                     (pos[0] < -(gridSize / 2 - 0.5) ||
                     pos[0] > (gridSize / 2) ||
                     pos[2] < -(gridSize / 2 - 0.5) ||
@@ -46,7 +47,7 @@ function Build({ gridSize, currentBlock, currentBuild, setBuilds }) {
                     return
                 }
             }
-            newBlocks = [...blocks.slice(), {pos: pos, type: currentBlock}]
+            newBlocks = [...blocks.slice(), {pos: roundedPos, type: currentBlock}]
         }
 
         setBlocks(newBlocks)
