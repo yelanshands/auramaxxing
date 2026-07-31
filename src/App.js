@@ -362,6 +362,31 @@ export default function App() {
         }
     }
 
+    async function sendBuild(build) {
+        try {
+            const { data, error } = await supabase
+                .from("builds")
+                .upsert({
+                    id: build.id,
+                    title: build.title,
+                    blocks: build.blocks,
+                    version: build.version,
+                    created_at: build.created_at
+                })
+                .select()
+
+            if (error) {
+                console.error("Error saving build to Supabase:", error.message)
+                return
+            }
+
+            console.log("Build saved successfully:", data)
+
+        } catch (error) {
+            console.error("Error sending request: ", error)
+        }
+    }
+
     return (
         <div style={{width:'100vw', height:'100vh', background:'black'}}>
             <Canvas camera={{position: [0, 8, 8]}}>
@@ -379,7 +404,7 @@ export default function App() {
                     onBlockSelect={(type, button) => selectBlock(type, button)} 
                     currentBuildID={currentBuildID} 
                     onBuildSelect={(id) => {
-                        sendData(currentBuild)
+                        sendBuild(currentBuild)
                         selectBuildID(id)} } />            
             </Canvas>
         </div>
