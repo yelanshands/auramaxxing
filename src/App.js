@@ -289,14 +289,14 @@ function Block({ type, index, onBlockSelect, currentBlock }) {
 
 }
 
-function BigHUD({ currentBlock, onBlockSelect, currentBuildID, onBuildSelect }) {
+function BigHUD({ builds, currentBlock, onBlockSelect, currentBuildID, onBuildSelect }) {
     return (
         <Hud>
             <OrthographicCamera makeDefault position={[0, 0, 10]} zoom={50} />
             <ambientLight intensity={0.35} />
             <directionalLight position={[5, 5, 10]} intensity={1} />
             
-            <BuildMenu currentBuildID={currentBuildID} onBuildSelect={onBuildSelect} />
+            <BuildMenu builds={builds} currentBuildID={currentBuildID} onBuildSelect={onBuildSelect} />
             <Palette currentBlock={currentBlock} onBlockSelect={onBlockSelect} />
         </Hud>
     )
