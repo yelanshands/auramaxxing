@@ -100,7 +100,8 @@ function Cube({ position, type, grid, mouseState, onAction, onMouseStateChange})
     const cubePos = position
     const [currentFaceNorm, setCurrentFaceNorm] = useState(null)
 
-    const getFacePos = (mult) => {
+    const getFacePos = (mult, norm=currentFaceNorm) => {
+        if (!norm) return cubePos
         return [
             cubePos[0] + currentFaceNorm.x * mult,
             cubePos[1] + currentFaceNorm.y * mult,
@@ -109,6 +110,7 @@ function Cube({ position, type, grid, mouseState, onAction, onMouseStateChange})
     }
 
     const getFaceRot = () => {
+        if (!currentFaceNorm) return [0, 0, 0]
         if (currentFaceNorm.x !== 0) return [0, Math.PI / 2, 0]
         if (currentFaceNorm.y !== 0) return [Math.PI / 2, 0, 0]
         return [0, 0, 0]
@@ -126,7 +128,7 @@ function Cube({ position, type, grid, mouseState, onAction, onMouseStateChange})
 
         if (!grid || (grid && (drag ? mouseState : event.button) === 2)) { 
             const targetPos = ((drag ? mouseState : event.button) === 2 
-                ? ((grid && faceNorm.y < 0) ? cubePos : getFacePos(1)) 
+                ? ((grid && faceNorm.y < 0) ? cubePos : getFacePos(1, faceNorm)) 
                 : cubePos)
                 
             onAction(targetPos, (drag ? event.buttons : event.button)) 
@@ -417,7 +419,7 @@ export default function App() {
                     currentBlock={currentBlock} 
                     currentBuild={currentBuild} 
                     setBuilds={(id, blocks) => updateBuilds(id, blocks)} />
-                <OrbitControls enableZoom={true} />
+                <OrbitControls makeDefault enableZoom={true} />
                 <BigHUD 
                     builds={builds}
                     currentBlock={currentBlock} 
