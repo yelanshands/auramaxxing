@@ -197,8 +197,12 @@ function Outline({ position, rotation }) {
 
 function BuildMenu({ builds, currentBuildID, onBuildSelect }) {
     const { viewport } = useThree()
-    const startXPos = -8
-    const startYPos = 6
+
+    //const startXPos = -8
+    //const startYPos = 6
+
+    const startXPos = -viewport.width / 2 + 1
+    const startYPos = viewport.height / 2 - 1
 
     return (
         <group position={[startXPos, startYPos, 0]}>
@@ -221,6 +225,8 @@ function BuildIcon({ id, type, index, onBuildSelect, currentBuildID }) {
     const spacing = 2.0;
     const [hovered, setHovered] = useState(false)
     const selected = currentBuildID === id
+
+    console.log(currentBuildID)
     
     return (
         <mesh
@@ -246,8 +252,12 @@ function BuildIcon({ id, type, index, onBuildSelect, currentBuildID }) {
 
 function Palette({ currentBlock, onBlockSelect }) {
     const { viewport } = useThree()
-    const startXPos = 7
-    const startYPos = 6
+    
+    //const startXPos = 7
+    //const startYPos = 6
+
+    const startXPos = viewport.width / 2 - 4
+    const startYPos = viewport.height / 2 - 1
 
     return (
         <group position={[startXPos, startYPos, 0]}>
@@ -326,6 +336,7 @@ export default function App() {
             } else if (dataBuilds && dataBuilds.length > 0) {
                 console.log(dataBuilds)
                 setBuilds(dataBuilds)
+                selectBuildID(dataBuilds[0].id)
             }
         }
         getBuilds()
