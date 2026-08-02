@@ -148,7 +148,6 @@ function Cube({ position, type, grid, mouseState, onAction, onMouseStateChange})
                 onPointerUp={ (event) => onMouseStateChange(0) }
                 onPointerOver={ 
                     (event) => {
-                        console.log(mouseState >= 1)
                         if (mouseState >= 1) { handlePointerClick(event, true) } 
                         else { handlePointerMove(event) }
                     }}
@@ -226,8 +225,6 @@ function BuildIcon({ id, type, index, onBuildSelect, currentBuildID }) {
     const [hovered, setHovered] = useState(false)
     const selected = currentBuildID === id
 
-    console.log(currentBuildID)
-    
     return (
         <mesh
             position={[(index % 3) * spacing, -(Math.floor(index / 3) * spacing), 0]}
@@ -258,6 +255,8 @@ function Palette({ currentBlock, onBlockSelect }) {
 
     const startXPos = viewport.width / 2 - 4
     const startYPos = viewport.height / 2 - 1
+
+    console.log(viewport.width, viewport.height)
 
     return (
         <group position={[startXPos, startYPos, 0]}>
