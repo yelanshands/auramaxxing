@@ -199,11 +199,11 @@ function Outline({ position, rotation }) {
 function BuildMenu({ builds, currentBuildID, onBuildSelect }) {
     const { viewport } = useThree()
 
-    //const startXPos = -8
-    //const startYPos = 6
+    const startXPos = -8
+    const startYPos = 6
 
-    const startXPos = -viewport.width / 2 + 1
-    const startYPos = viewport.height / 2 - 1
+    //const startXPos = -viewport.width / 2 + 1
+    //const startYPos = viewport.height / 2 - 1
 
     return (
         <group position={[startXPos, startYPos, 0]}>
@@ -252,13 +252,13 @@ function BuildIcon({ id, type, index, onBuildSelect, currentBuildID }) {
 function Palette({ currentBlock, onBlockSelect }) {
     const { viewport } = useThree()
     
-    //const startXPos = 7
-    //const startYPos = 6
+    const startXPos = 7
+    const startYPos = 6
 
-    const startXPos = viewport.width / 2 - 4
-    const startYPos = viewport.height / 2 - 1
+    //const startXPos = viewport.width / 2 - 4
+    //const startYPos = viewport.height / 2 - 1
 
-    console.log(viewport.width, viewport.height)
+    //console.log(viewport.width, viewport.height)
 
     return (
         <group position={[startXPos, startYPos, 0]}>
@@ -419,7 +419,7 @@ export default function App() {
                     currentBlock={currentBlock} 
                     currentBuild={currentBuild} 
                     setBuilds={(id, blocks) => updateBuilds(id, blocks)} />
-                <OrbitControls makeDefault enableZoom={true} />
+                <OrbitControls enableZoom={true} />
                 <BigHUD 
                     builds={builds}
                     currentBlock={currentBlock} 
