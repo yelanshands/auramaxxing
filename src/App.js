@@ -316,6 +316,38 @@ function BigHUD({ builds, currentBlock, onBlockSelect, currentBuildID, onBuildSe
 export default function App() {
     const gridSize = 8;
 
+    const [user, setUser] = useState(null)
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [authMessage, setAuthMessage] = useState('')
+
+    useEffect(() => {
+        supabase.auth.getUser().then(({ data: { user } }) => setUser(user))
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            setUser(session?.user ?? null)
+        })
+
+        return () => subscription.unsubscribe()
+    }, [])
+
+    async function handleSignUp() {
+        setAuthMessage('')
+        const { error } = await supabase.auth.signUp({ email, password })
+        setAuthMessage(error ? error.message : 'Signed up. Please check your email for a confirmation link.')
+    }
+
+    async function handleLogIn() {
+        setAuthMessage('')
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        setAuthMessage(error ? error.message : 'Logged in.')
+    }
+
+    async function handleLogOut() {
+        await supabase.auth.signOut()
+        setAuthMessage('Logged out.')
+    }
+
     const [currentBlock, setCurrentBlock] = useState('white')
     
     const [builds, setBuilds] = useState([
@@ -410,6 +442,33 @@ export default function App() {
 
     return (
         <div style={{width:'100vw', height:'100vh', background:'black'}}>
+            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10, color: 'white' }}>
+                {authMessage && <p>{authMessage}</p>}
+                {user ? (
+                    <div>
+                        <span>Logged in as: {user.email}</span>
+                        <button onClick={handleLogOut}>Log Out</button>
+                    </div>
+                ) : (
+                    <div>
+                        <input 
+                            type="email" 
+                            placeholder="Email" 
+                            value={email} 
+                            onChange={(e) => setEmail(e.target.value)} 
+                        />
+                        <input 
+                            type="password" 
+                            placeholder="Password" 
+                            value={password} 
+                            onChange={(e) => setPassword(e.target.value)} 
+                        />
+                        <button onClick={handleSignUp}>Sign Up</button>
+                        <button onClick={handleLogIn}>Log In</button>
+                    </div>
+                )}
+            </div>
+            
             <Canvas camera={{position: [0, 8, 8]}}>
                 <ambientLight intensity={0.35} />
                 <directionalLight position={[10, 10, 10]} intensity={1} />
