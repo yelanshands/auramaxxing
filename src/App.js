@@ -324,7 +324,7 @@ export default function App() {
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user } }) => setUser(user))
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user ?? null)
         })
 
@@ -455,13 +455,13 @@ export default function App() {
                             type="email" 
                             placeholder="Email" 
                             value={email} 
-                            onChange={(e) => setEmail(e.target.value)} 
+                            onChange={(event) => setEmail(event.target.value)} 
                         />
                         <input 
                             type="password" 
                             placeholder="Password" 
                             value={password} 
-                            onChange={(e) => setPassword(e.target.value)} 
+                            onChange={(event) => setPassword(event.target.value)} 
                         />
                         <button onClick={handleSignUp}>Sign Up</button>
                         <button onClick={handleLogIn}>Log In</button>
