@@ -347,6 +347,7 @@ export default function App() {
 
     async function handleLogOut() {
         await supabase.auth.signOut()
+        setUser(null)
         setAuthMessage('Logged out.')
     }
 
