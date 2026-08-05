@@ -534,7 +534,12 @@ export default function App() {
                         />
                         <button onClick={handleCreate}>Create New Build</button>
                         
-                        {editingBuild && ( <button onClick={() => sendBuild(currentBuild)}>Save Build</button> )}
+                        {editingBuild && ( 
+                            <button 
+                                style={{ display: 'block', marginTop: '1rem' }}
+                                onClick={() => sendBuild(currentBuild)}>
+                                    Save Build
+                            </button> )}
                     </div>
                 ) : (
                     <div>
