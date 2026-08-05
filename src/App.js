@@ -3,7 +3,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, OrthographicCamera, Outlines , Hud } from '@react-three/drei'
 import { supabase } from './utils/supabase'
 
-function Build({ gridSize, currentBlock, currentBuild, setBuilds }) {
+function Build({ editing, gridSize, currentBlock, currentBuild, setBuilds }) {
     const [blocks, setBlocks] = useState(currentBuild.blocks)
     const grid = Array.from(
         { length: gridSize * gridSize }, 
@@ -21,6 +21,8 @@ function Build({ gridSize, currentBlock, currentBuild, setBuilds }) {
     }
 
     function handleAction(pos, action) {
+        if (!editing) { return }
+
         const roundedPos = pos.map(coord => Math.round(coord))
         let newBlocks = blocks.slice()
 
@@ -354,6 +356,7 @@ export default function App() {
         {   
             id: "test1",
             title: "test2",
+            author: "test3",
             blocks: [],
             version: 0,
             created_at: "2026-07-29T12:00:00.000000+00:00"
@@ -375,10 +378,29 @@ export default function App() {
         getBuilds()
     }, [])
 
+    const [title, setTitle] = useState('')
+    
+    async function handleCreate() {
+        if (title.trim().length > 0) {
+            const newBuild = await sendBuild(title)
+            if (newBuild && newBuild.id) {
+                setBuilds((builds) => [...builds, newBuild])
+                selectBuildID(newBuild.id)
+
+                console.log(newBuild.id)
+
+                await updateProfile(newBuild.id)
+                
+                setTitle('')
+            }
+        }
+    }
+
     const [currentBuildID, selectBuildID] = useState(builds[0].id)
     const currentBuild = builds.find((build) => 
         build.id === currentBuildID) || builds[0]
     const currentVersion = currentBuild.version
+    const editingBuild = !currentBuild?.author || (user?.id && currentBuild.author === user.id)
 
     function selectBlock(type, button) {
         if (button === 0) {
@@ -415,19 +437,48 @@ export default function App() {
         }
     }
 
-    async function sendBuild(build) {
+    async function updateProfile(buildID=null) {
+        console.log("new build id: ", buildID)
         try {
-            const { data, error } = await supabase
-                .from("builds")
-                .upsert({
-                    id: build.id,
-                    title: build.title,
-                    blocks: build.blocks,
-                    version: build.version,
-                    created_at: build.created_at
-                })
-                .select()
+            if (!(buildID && user)) { return }
 
+            const { data, error } = await supabase.rpc('append_build_id', {
+                profile_id: user.id,
+                new_build_id: buildID
+            });
+        
+            if (error) {
+                console.error("Error updating profile to Supabase:", error.message)
+                return
+            }
+
+            console.log("Profile saved successfully:", data)
+
+        } catch (error) {
+            console.error("Error sending request: ", error)
+        }
+    }
+
+    async function sendBuild(buildOrTitle=null) {
+        try {
+            const isBuildObject = typeof buildOrTitle === 'object' && buildOrTitle !== null
+
+            const query = isBuildObject
+                ? supabase.from("builds").upsert({
+                    id: buildOrTitle.id,
+                    title: buildOrTitle.title,
+                    author: buildOrTitle.author,
+                    blocks: buildOrTitle.blocks,
+                    version: buildOrTitle.version,
+                    created_at: buildOrTitle.created_at
+                }) 
+                : supabase.from("builds").insert({
+                    title: typeof buildOrTitle === 'string' ? buildOrTitle : title,
+                    author: user?.id
+                })
+
+            const { data, error } = await query.select()
+            
             if (error) {
                 console.error("Error saving build to Supabase:", error.message)
                 return
@@ -435,8 +486,11 @@ export default function App() {
 
             console.log("Build saved successfully:", data)
 
+            return data ? data[0] : null
+
         } catch (error) {
             console.error("Error sending request: ", error)
+            return null
         }
     }
 
@@ -468,12 +522,33 @@ export default function App() {
                     </div>
                 )}
             </div>
+
+            <div style={{ position: 'absolute', top: 60, left: 10, zIndex: 10, color: 'white' }}>
+                {user ? (
+                    <div>
+                        <input 
+                            type="text" 
+                            placeholder="Title" 
+                            value={title}
+                            onChange={(event) => setTitle(event.target.value)} 
+                        />
+                        <button onClick={handleCreate}>Create New Build</button>
+                        
+                        {editingBuild && ( <button onClick={() => sendBuild(currentBuild)}>Save Build</button> )}
+                    </div>
+                ) : (
+                    <div>
+                        <span>Log in with an account to create a build.</span>
+                    </div>
+                )}
+            </div>
             
             <Canvas camera={{position: [0, 8, 8]}}>
                 <ambientLight intensity={0.35} />
                 <directionalLight position={[10, 10, 10]} intensity={1} />
                 <Build 
                     key={`${currentBuildID}-${currentVersion}`}
+                    editing={editingBuild}
                     gridSize={gridSize}
                     currentBlock={currentBlock} 
                     currentBuild={currentBuild} 
@@ -485,8 +560,8 @@ export default function App() {
                     onBlockSelect={(type, button) => selectBlock(type, button)} 
                     currentBuildID={currentBuildID} 
                     onBuildSelect={(id) => {
-                        sendBuild(currentBuild)
-                        selectBuildID(id)} } />            
+                        selectBuildID(id)
+                        }} />            
             </Canvas>
         </div>
     )
