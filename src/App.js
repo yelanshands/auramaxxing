@@ -13,12 +13,6 @@ function Build({ editing, gridSize, currentBlock, currentBuild, setBuilds }) {
         ))
 
     const [numOfBlocks, setNumOfBlocks] = useState(0)
-    const [mouseState, setMouseState] = useState(0)
-    
-    function handleMouseState(button) {
-        // console.log(button)
-        setMouseState(button)
-    }
 
     function handleAction(pos, action) {
         if (!editing) { return }
@@ -73,9 +67,7 @@ function Build({ editing, gridSize, currentBlock, currentBuild, setBuilds }) {
                             position={block.pos} 
                             type={block.type} 
                             grid={false} 
-                            mouseState={mouseState} 
-                            onAction={(pos, action) => handleAction(pos, action)} 
-                            onMouseStateChange={(button) => handleMouseState(button)} />
+                            onAction={(pos, action) => handleAction(pos, action)} />
                     ))
                 }
             </group>
@@ -87,9 +79,7 @@ function Build({ editing, gridSize, currentBlock, currentBuild, setBuilds }) {
                             position={cell.pos} 
                             type='dimgray' 
                             grid={true} 
-                            mouseState={mouseState} 
-                            onAction={(pos, type, action) => handleAction(pos, type, action)} 
-                            onMouseStateChange={(button) => handleMouseState(button)} />
+                            onAction={(pos, type, action) => handleAction(pos, type, action)} />
                     ))
                 }
             </group>
@@ -97,7 +87,7 @@ function Build({ editing, gridSize, currentBlock, currentBuild, setBuilds }) {
     )
 }
 
-function Cube({ position, type, grid, mouseState, onAction, onMouseStateChange}) {
+function Cube({ position, type, grid, onAction}) {
     const cubeRef = useRef()
     const cubePos = position
     const [currentFaceNorm, setCurrentFaceNorm] = useState(null)
@@ -123,17 +113,17 @@ function Cube({ position, type, grid, mouseState, onAction, onMouseStateChange})
         setCurrentFaceNorm(event.face.normal)
     }
 
-    function handlePointerClick(event, drag=false) {
+    function handlePointerClick(event) {
         event.stopPropagation()
         const faceNorm = event.face?.normal || currentFaceNorm
         if (!faceNorm) return
 
-        if (!grid || (grid && (drag ? mouseState : event.button) === 2)) { 
-            const targetPos = ((drag ? mouseState : event.button) === 2 
+        if (!grid || (grid && event.button === 2)) { 
+            const targetPos = (event.button === 2 
                 ? ((grid && faceNorm.y < 0) ? cubePos : getFacePos(1, faceNorm)) 
                 : cubePos)
                 
-            onAction(targetPos, (drag ? event.buttons : event.button)) 
+            onAction(targetPos, event.button)
             setCurrentFaceNorm(null)
         }
     }
@@ -146,14 +136,11 @@ function Cube({ position, type, grid, mouseState, onAction, onMouseStateChange})
                 scale={1}
                 onPointerDown={ 
                     (event) => {
-                        onMouseStateChange(event.button === 0 ? 1 : (event.button === 2) ? 2 : 0) 
                         handlePointerClick(event) 
                     }}
-                onPointerUp={ (event) => onMouseStateChange(0) }
                 onPointerOver={ 
                     (event) => {
-                        if (mouseState >= 1) { handlePointerClick(event, true) } 
-                        else { handlePointerMove(event) }
+                        handlePointerMove(event) 
                     }}
                 onPointerMove={ (event) => handlePointerMove(event) }
                 onPointerOut={ (event) => setCurrentFaceNorm(null) }>
