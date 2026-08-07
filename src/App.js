@@ -318,10 +318,16 @@ function BigHUD({ builds, currentBlock, onBlockSelect, currentBuildID, onBuildSe
 export default function App() {
     const gridSize = 8;
 
+    const [signingUp, setSigningUp] = useState(false)
+    const [loggingIn, setLoggingIn] = useState(false)
+
     const [user, setUser] = useState(null)
     const [email, setEmail] = useState('')
+    const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [authMessage, setAuthMessage] = useState('')
+
+    const [authorUsername, setAuthorUsername] = useState('')
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user } }) => setUser(user))
@@ -335,28 +341,42 @@ export default function App() {
 
     async function handleSignUp() {
         setAuthMessage('')
-        const { error } = await supabase.auth.signUp({ email, password })
-        setAuthMessage(error ? error.message : 'Signed up. Please check your email for a confirmation link.')
+        const { error } = await supabase.auth.signUp({ email, password, options: { data: { username: username.toLowerCase().trim() }} })
+        setAuthMessage(error ? 
+            (error.message.includes('{}') 
+            ? 'Username is already taken.' : error.message) 
+            : 'Signed up. Please check your email for a confirmation link.')
+        if (!error) { 
+            setSigningUp(false) 
+            setAuthMessage('')
+        }
     }
 
     async function handleLogIn() {
         setAuthMessage('')
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         setAuthMessage(error ? error.message : 'Logged in.')
+        if (!error) { 
+            setLoggingIn(false) 
+            setAuthMessage('') 
+        }
     }
 
     async function handleLogOut() {
         await supabase.auth.signOut()
         setAuthMessage('Logged out.')
+        setSigningUp(false)
+        setLoggingIn(false)
+        setAuthMessage('')
     }
 
     const [currentBlock, setCurrentBlock] = useState('white')
     
     const [builds, setBuilds] = useState([
         {   
-            id: "test1",
-            title: "test2",
-            author: "test3",
+            id: '',
+            title: 'Loading builds...',
+            author: '',
             blocks: [],
             version: 0,
             created_at: "2026-07-29T12:00:00.000000+00:00"
@@ -365,9 +385,13 @@ export default function App() {
 
     useEffect(() => {
         async function getBuilds() {
-            const { data: dataBuilds, error } = await supabase.from('builds').select()
+            const { data: dataBuilds, error } = await supabase
+                .from('builds')
+                .select()
+                .order('created_at', { ascending: true })
+
             if (error) {
-                console.error("Supabase Error:", error.message)
+                console.error("Supabase Error: ", error.message)
                 return
             } else if (dataBuilds && dataBuilds.length > 0) {
                 console.log(dataBuilds)
@@ -387,8 +411,6 @@ export default function App() {
                 setBuilds((builds) => [...builds, newBuild])
                 selectBuildID(newBuild.id)
 
-                console.log(newBuild.id)
-
                 await updateProfile(newBuild.id)
                 
                 setTitle('')
@@ -396,11 +418,30 @@ export default function App() {
         }
     }
 
-    const [currentBuildID, selectBuildID] = useState(builds[0].id)
+    const [currentBuildID, setBuildID] = useState(builds[0].id)
     const currentBuild = builds.find((build) => 
         build.id === currentBuildID) || builds[0]
     const currentVersion = currentBuild.version
     const editingBuild = !currentBuild?.author || (user?.id && currentBuild.author === user.id)
+
+    async function selectBuildID(id) {
+        setBuildID(id)
+        const thisBuild = builds.find((build) => build.id === id) || builds[0]
+        
+        if (!thisBuild.author) { 
+            setAuthorUsername('')
+            return 
+        }
+        
+        const author = await getUsername(thisBuild.author)
+
+        if (author) { 
+            setAuthorUsername(author) 
+        } else { 
+            setAuthorUsername('') 
+        }
+        
+    }
 
     function selectBlock(type, button) {
         if (button === 0) {
@@ -480,11 +521,11 @@ export default function App() {
             const { data, error } = await query.select()
             
             if (error) {
-                console.error("Error saving build to Supabase:", error.message)
+                console.error("Error saving build to Supabase: ", error.message)
                 return
             }
 
-            console.log("Build saved successfully:", data)
+            console.log("Build saved successfully: ", data)
 
             return data ? data[0] : null
 
@@ -494,36 +535,68 @@ export default function App() {
         }
     }
 
+    async function getUsername(userID) {
+        const { data: author, error } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', userID)
+            .maybeSingle();
+
+        if (error) {
+            console.error("Error fetching author: ", error.message)
+            return null
+        }
+
+        console.log("id: ", userID, " username: ", author.username)
+        return author.username
+    }
+
     return (
         <div style={{width:'100vw', height:'100vh', background:'black'}}>
-            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10, color: 'white' }}>
+            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10, marginBottom: '1.5rem',color: 'white' }}>
                 {authMessage && <p>{authMessage}</p>}
-                {user ? (
-                    <div>
-                        <span>Logged in as: {user.email}</span>
-                        <button onClick={handleLogOut}>Log Out</button>
-                    </div>
-                ) : (
-                    <div>
-                        <input 
-                            type="email" 
-                            placeholder="Email" 
-                            value={email} 
-                            onChange={(event) => setEmail(event.target.value)} 
-                        />
-                        <input 
-                            type="password" 
-                            placeholder="Password" 
-                            value={password} 
-                            onChange={(event) => setPassword(event.target.value)} 
-                        />
-                        <button onClick={handleSignUp}>Sign Up</button>
-                        <button onClick={handleLogIn}>Log In</button>
-                    </div>
-                )}
-            </div>
+                
+                <div style={{ marginBottom: '1.5rem' }}>
+                    {user ? (
+                        <div>
+                            <span>Logged in as: {user.email} </span>
+                            <button onClick={handleLogOut}>Log Out</button>
+                        </div>
+                    ) : (
+                        <div>
+                            { (loggingIn || signingUp) && <div>
+                                <input
+                                    type="email" 
+                                    placeholder="Email" 
+                                    value={email} 
+                                    onChange={(event) => setEmail(event.target.value)} 
+                                />
+                                { signingUp && <input 
+                                    type="text" 
+                                    placeholder="Username" 
+                                    value={username} 
+                                    onChange={(event) => setUsername(event.target.value)} 
+                                /> }
+                                <input 
+                                    type="password" 
+                                    placeholder="Password" 
+                                    value={password} 
+                                    onChange={(event) => setPassword(event.target.value)} 
+                                /> 
+                            </div> }
+                            { (signingUp || loggingIn) && <button onClick={ () => { 
+                                    setSigningUp(false) 
+                                    setLoggingIn(false) 
+                                    setAuthMessage('') }}
+                                >Back</button> }
+                            { !loggingIn && <button onClick={ () => signingUp ? handleSignUp() : setSigningUp(true) }>Sign Up</button> }
+                            { !signingUp && <button onClick={ () => loggingIn ? handleLogIn() : setLoggingIn(true) }>Log In</button> }
+                        </div>
+                    )}
+                </div>
 
-            <div style={{ position: 'absolute', top: 60, left: 10, zIndex: 10, color: 'white' }}>
+
+
                 {user ? (
                     <div>
                         <input 
@@ -534,6 +607,11 @@ export default function App() {
                         />
                         <button onClick={handleCreate}>Create New Build</button>
                         
+                        <div style={{ marginTop: '1rem' }}>
+                            <span> {currentBuild.title} </span>
+                            {authorUsername && ( <span style={{ display: 'block' }}> by {authorUsername} </span> )}
+                        </div>
+
                         {editingBuild && ( 
                             <button 
                                 style={{ display: 'block', marginTop: '1rem' }}
