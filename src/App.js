@@ -621,7 +621,12 @@ export default function App() {
                     </div>
                 ) : (
                     <div>
-                        <span>Log in with an account to create a build.</span>
+                        <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                            <span> {currentBuild.title} </span>
+                            {authorUsername && ( <span style={{ display: 'block' }}> by {authorUsername} </span> )}
+                        </div>
+
+                        <span>Log in with an account to create a build. </span>
                     </div>
                 )}
             </div>
