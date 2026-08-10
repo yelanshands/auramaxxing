@@ -34,7 +34,7 @@ function Build({ editing, gridSize, currentBlock, currentBuild, setBuilds }) {
             for (const block of blocks) {
                 if ((block.pos[0] === roundedPos[0] && 
                     block.pos[1] === roundedPos[1] && 
-                    block.pos[2] == roundedPos[2]) || 
+                    block.pos[2] === roundedPos[2]) || 
                     (pos[0] < -(gridSize / 2 - 0.5) ||
                     pos[0] > (gridSize / 2) ||
                     pos[2] < -(gridSize / 2 - 0.5) ||
@@ -151,7 +151,7 @@ function Cube({ position, type, grid, onAction}) {
                 <Outline position={grid ? [cubePos[0], cubePos[1] + 0.5, cubePos[2]] : getFacePos(0.50375)} rotation={grid ? [Math.PI / 2, 0, 0] : getFaceRot()}/>
             )}
         </>
-    );
+    )
 }
 
 function Outline({ position, rotation }) {
@@ -185,7 +185,7 @@ function Outline({ position, rotation }) {
     )
 }
 
-function BuildMenu({ builds, currentBuildID, onBuildSelect }) {
+function BuildMenu({ user, builds, currentBuildID, onBuildSelect }) {
     const { viewport } = useThree()
 
     const startXPos = -8
@@ -197,7 +197,7 @@ function BuildMenu({ builds, currentBuildID, onBuildSelect }) {
     return (
         <group position={[startXPos, startYPos, 0]}>
             {
-                builds?.map((build, i) => (
+                builds?.filter((build) => build.visibility || (user?.id && build.author === user.id)).map((build, i) => (
                     <BuildIcon 
                         key={build.id}
                         id={build.id}
@@ -212,7 +212,7 @@ function BuildMenu({ builds, currentBuildID, onBuildSelect }) {
 }
 
 function BuildIcon({ id, type, index, onBuildSelect, currentBuildID }) {
-    const spacing = 2.0;
+    const spacing = 2.0
     const [hovered, setHovered] = useState(false)
     const selected = currentBuildID === id
 
@@ -265,7 +265,7 @@ function Palette({ currentBlock, onBlockSelect }) {
 }
 
 function Block({ type, index, onBlockSelect, currentBlock }) {
-    const spacing = 2.0;
+    const spacing = 2.0
     const [hovered, setHovered] = useState(false)
     const selected = currentBlock === type
     
@@ -289,21 +289,21 @@ function Block({ type, index, onBlockSelect, currentBlock }) {
 
 }
 
-function BigHUD({ builds, currentBlock, onBlockSelect, currentBuildID, onBuildSelect }) {
+function BigHUD({ user, builds, currentBlock, onBlockSelect, currentBuildID, onBuildSelect }) {
     return (
         <Hud>
             <OrthographicCamera makeDefault position={[0, 0, 10]} zoom={50} />
             <ambientLight intensity={0.35} />
             <directionalLight position={[5, 5, 10]} intensity={1} />
             
-            <BuildMenu builds={builds} currentBuildID={currentBuildID} onBuildSelect={onBuildSelect} />
+            <BuildMenu user={user} builds={builds} currentBuildID={currentBuildID} onBuildSelect={onBuildSelect} />
             <Palette currentBlock={currentBlock} onBlockSelect={onBlockSelect} />
         </Hud>
     )
 }
 
 export default function App() {
-    const gridSize = 8;
+    const gridSize = 8
 
     const [signingUp, setSigningUp] = useState(false)
     const [loggingIn, setLoggingIn] = useState(false)
@@ -335,7 +335,6 @@ export default function App() {
             : 'Signed up. Please check your email for a confirmation link.')
         if (!error) { 
             setSigningUp(false) 
-            setAuthMessage('')
         }
     }
 
@@ -355,6 +354,9 @@ export default function App() {
         setSigningUp(false)
         setLoggingIn(false)
         setAuthMessage('')
+        if (!currentBuild.visibility) {
+            selectBuildID(builds[0].id)
+        }
     }
 
     const [currentBlock, setCurrentBlock] = useState('white')
@@ -366,6 +368,7 @@ export default function App() {
             author: '',
             blocks: [],
             version: 0,
+            visibility: false,
             created_at: "2026-07-29T12:00:00.000000+00:00"
         }
     ])
@@ -447,22 +450,22 @@ export default function App() {
             (build.id === id) ? {...build, blocks: blocks, version: build.version + 1} : build))
     }
 
-    async function sendData(data) {
-        try {
-            const res = await fetch('/api/build', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({data: data}), 
-            })
+    function updateVisibility(id, visibility) {
+       const thisBuild = builds.find((build) => build.id === id)
+        if (!thisBuild) { return }
 
-            const response = await res.json()
-            console.log(response)
-
-        } catch (error) {
-            console.error("Error sending request: ", error)
+        const newBuild = {
+            ...thisBuild,
+            visibility: visibility,
+            version: thisBuild.version + 1,
         }
+
+        setBuilds((builds) =>
+            builds.map((build) => (build.id === id ? newBuild : build))
+        )
+        console.log(newBuild)
+        sendBuild(newBuild)
+        
     }
 
     async function updateProfile(buildID=null) {
@@ -473,14 +476,14 @@ export default function App() {
             const { data, error } = await supabase.rpc('append_build_id', {
                 profile_id: user.id,
                 new_build_id: buildID
-            });
+            })
         
             if (error) {
-                console.error("Error updating profile to Supabase:", error.message)
+                console.error("Error updating profile to Supabase: ", error.message)
                 return
             }
 
-            console.log("Profile saved successfully:", data)
+            console.log("Profile saved successfully: ", data)
 
         } catch (error) {
             console.error("Error sending request: ", error)
@@ -498,6 +501,7 @@ export default function App() {
                     author: buildOrTitle.author,
                     blocks: buildOrTitle.blocks,
                     version: buildOrTitle.version,
+                    visibility: buildOrTitle.visibility,
                     created_at: buildOrTitle.created_at
                 }) 
                 : supabase.from("builds").insert({
@@ -522,12 +526,50 @@ export default function App() {
         }
     }
 
+    async function deleteBuild(id) {
+        if (!window.confirm("Are you sure you want to delete this build? ")) { return }
+
+        try {
+            const { error: buildError } = await supabase
+                .from('builds')
+                .delete()
+                .eq('id', id)
+
+            if (buildError) {
+                console.error("Error deleting build from Supabase: ", buildError.message)
+                return
+            }
+
+            const { error: profileError } = await supabase.rpc('remove_build_id', {
+                profile_id: user.id,
+                target_build_id: id
+            });
+
+            if (profileError) {
+                console.error("Error updating profile to Supabase: ", profileError.message)
+                return
+            }
+
+            setBuilds((builds) => {
+                const newBuilds = builds.filter((build) => build.id !== id)
+
+                if (id === currentBuildID) {
+                    selectBuildID(newBuilds[0].id)
+                }
+                return newBuilds
+            })
+
+        } catch (error) {
+            console.error("Error during deletion: ", error)
+        }
+    }
+
     async function getUsername(userID) {
         const { data: author, error } = await supabase
             .from('profiles')
             .select('username')
             .eq('id', userID)
-            .maybeSingle();
+            .maybeSingle()
 
         if (error) {
             console.error("Error fetching author: ", error.message)
@@ -593,30 +635,43 @@ export default function App() {
                             onChange={(event) => setTitle(event.target.value)} 
                         />
                         <button onClick={handleCreate}>Create New Build</button>
-                        
+                    </div>
+                ) : (
+                    <span>Log in with an account to create a build. </span>
+                )}
+                    
                         <div style={{ marginTop: '1rem' }}>
                             <span> {currentBuild.title} </span>
                             {authorUsername && ( <span style={{ display: 'block' }}> by {authorUsername} </span> )}
                         </div>
 
                         {editingBuild && ( 
-                            <button 
-                                style={{ display: 'block', marginTop: '1rem' }}
-                                onClick={() => sendBuild(currentBuild)}>
-                                    Save Build
-                            </button> )}
-                    </div>
-                ) : (
-                    <div>
-                        <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
-                            <span> {currentBuild.title} </span>
-                            {authorUsername && ( <span style={{ display: 'block' }}> by {authorUsername} </span> )}
-                        </div>
+                            <div>
+                                {currentBuild.author && (
+                                <div>
+                                    <label htmlFor="visibility">Creation Visibility: </label>
 
-                        <span>Log in with an account to create a build. </span>
+                                    <select id="visibility" value={String(currentBuild.visibility)} onChange={(event) => updateVisibility(currentBuildID, event.target.value === 'true')}>
+                                        <option value='false'>Private</option>
+                                        <option value='true'>Public</option>
+                                    </select>
+                                </div> )}
+
+                                <button 
+                                    style={{ display: 'block', marginTop: '1rem' }}
+                                    onClick={() => sendBuild(currentBuild)}>
+                                        Save Build
+                                </button> 
+
+                                {currentBuild.author && (
+                                    <button 
+                                        style={{ display: 'block', marginTop: '1rem' }}
+                                        onClick={() => deleteBuild(currentBuildID)}>
+                                            Delete Build
+                                    </button> 
+                                )}
+                            </div> )}
                     </div>
-                )}
-            </div>
             
             <Canvas camera={{position: [0, 8, 8]}}>
                 <ambientLight intensity={0.35} />
@@ -630,6 +685,7 @@ export default function App() {
                     setBuilds={(id, blocks) => updateBuilds(id, blocks)} />
                 <OrbitControls enableZoom={true} />
                 <BigHUD 
+                    user={user}
                     builds={builds}
                     currentBlock={currentBlock} 
                     onBlockSelect={(type, button) => selectBlock(type, button)} 
