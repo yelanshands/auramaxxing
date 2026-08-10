@@ -355,7 +355,7 @@ export default function App() {
         setLoggingIn(false)
         setAuthMessage('')
         if (!currentBuild.visibility) {
-            selectBuildID(builds[0].id)
+            setBuildID(builds[0].id)
         }
     }
 
@@ -386,7 +386,7 @@ export default function App() {
             } else if (dataBuilds && dataBuilds.length > 0) {
                 console.log(dataBuilds)
                 setBuilds(dataBuilds)
-                selectBuildID(dataBuilds[0].id)
+                setBuildID(dataBuilds[0].id)
             }
         }
         getBuilds()
@@ -399,7 +399,7 @@ export default function App() {
             const newBuild = await sendBuild(title)
             if (newBuild && newBuild.id) {
                 setBuilds((builds) => [...builds, newBuild])
-                selectBuildID(newBuild.id)
+                setBuildID(newBuild.id)
 
                 await updateProfile(newBuild.id)
                 
@@ -414,24 +414,19 @@ export default function App() {
     const currentVersion = currentBuild.version
     const editingBuild = !currentBuild?.author || (user?.id && currentBuild.author === user.id)
 
-    async function selectBuildID(id) {
-        setBuildID(id)
-        const thisBuild = builds.find((build) => build.id === id) || builds[0]
-        
-        if (!thisBuild.author) { 
-            setAuthorUsername('')
-            return 
-        }
-        
-        const author = await getUsername(thisBuild.author)
+    useEffect(() => {
+        async function updateAuthor() {
+            if (!currentBuild?.author) {
+                setAuthorUsername('')
+                return
+            }
 
-        if (author) { 
-            setAuthorUsername(author) 
-        } else { 
-            setAuthorUsername('') 
+            const author = await getUsername(currentBuild.author)
+            setAuthorUsername(author || '')
         }
-        
-    }
+
+        updateAuthor()
+    }, [currentBuildID, currentBuild?.author])
 
     function selectBlock(type, button) {
         if (button === 0) {
@@ -554,7 +549,7 @@ export default function App() {
                 const newBuilds = builds.filter((build) => build.id !== id)
 
                 if (id === currentBuildID) {
-                    selectBuildID(newBuilds[0].id)
+                    setBuildID(newBuilds[0].id)
                 }
                 return newBuilds
             })
@@ -642,7 +637,13 @@ export default function App() {
                     
                         <div style={{ marginTop: '1rem' }}>
                             <span> {currentBuild.title} </span>
-                            {authorUsername && ( <span style={{ display: 'block' }}> by {authorUsername} </span> )}
+                            {currentBuild.author && (
+                                authorUsername ? (
+                                    <span style={{ display: 'block' }}>by {authorUsername} </span>
+                                ) : (
+                                    <span style={{ display: 'block' }}>by ... </span>
+                                )
+                            )}
                         </div>
 
                         {editingBuild && ( 
@@ -691,7 +692,7 @@ export default function App() {
                     onBlockSelect={(type, button) => selectBlock(type, button)} 
                     currentBuildID={currentBuildID} 
                     onBuildSelect={(id) => {
-                        selectBuildID(id)
+                        setBuildID(id)
                         }} />            
             </Canvas>
         </div>
