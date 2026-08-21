@@ -20,4 +20,16 @@ button, input, select, option {
   border: none;
   padding: 3px 6px;
   border-radius: 2px;
+
+  transition: all 0.2s ease;
+}
+
+button:hover {
+    background-color: rgba(222, 241, 255, 0.9);
+    transform: translateY(-1px);
+}
+
+button:active {
+    background-color: rgba(168, 204, 226, 0.9);
+    transform: translateY(1px);
 }
