@@ -708,6 +708,14 @@ export default function App() {
                                 )}
                             </div> )}
                     </div>
+                <div style={{ position: 'absolute', bottom: 30, left: 30, zIndex: 10, marginBottom: '1.5rem', color: 'white' }}>
+                    <p>CONTROLS</p>
+                    <p>Place Block - Right Click</p>
+                    <p>Delete Block - Left Click</p>
+                    <p>-</p>
+                    <p>Tip: Right click a block in the palette interface (on the right) to replace</p>
+                    <p>all instances of the currently selected block with the clicked block.</p>
+                </div>
             
             <Canvas camera={{position: [0, 8, 8]}}>
                 <ambientLight intensity={0.35} />
