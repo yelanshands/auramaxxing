@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, OrthographicCamera, Outlines , Hud } from '@react-three/drei'
+import { OrbitControls, OrthographicCamera, Outlines , Hud, useTexture } from '@react-three/drei'
+import * as THREE from 'three'
 import { supabase } from './utils/supabase'
 
 function Build({ editing, gridSize, currentBlock, currentBuild, setBuilds }) {
@@ -91,6 +92,14 @@ function Cube({ position, type, grid, onAction}) {
     const cubeRef = useRef()
     const cubePos = position
     const [currentFaceNorm, setCurrentFaceNorm] = useState(null)
+    
+    const texture = useTexture(grid ? `/block_textures/glass.png` : `/block_textures/${type}.png`)
+
+    if (!grid && texture) {
+        texture.magFilter = THREE.NearestFilter
+        texture.minFilter = THREE.NearestFilter
+        texture.generateMipmaps = false;
+    }
 
     const getFacePos = (mult, norm=currentFaceNorm) => {
         if (!norm) return cubePos
@@ -145,7 +154,7 @@ function Cube({ position, type, grid, onAction}) {
                 onPointerMove={ (event) => handlePointerMove(event) }
                 onPointerOut={ (event) => setCurrentFaceNorm(null) }>
                     <boxGeometry args={grid ? [0.95, 0.05, 0.95] : [1, 1, 1]} />
-                    <meshStandardMaterial color={type} />
+                    <meshStandardMaterial {...(grid ? { color: type } : { map: texture, transparent: true })} />
             </mesh>
             { currentFaceNorm && (
                 <Outline position={grid ? [cubePos[0], cubePos[1] + 0.5, cubePos[2]] : getFacePos(0.50375)} rotation={grid ? [Math.PI / 2, 0, 0] : getFaceRot()}/>
@@ -161,34 +170,34 @@ function Outline({ position, rotation }) {
                 position={[-0.5, 0, 0]}
                 rotation={[0, 0, 0]}>
                 <boxGeometry args={[0.075, 1.075, 0.075]} />
-                <meshBasicMaterial color='white' />
+                <meshBasicMaterial color='glass' />
             </mesh>
             <mesh
                 position={[0.5, 0, 0]}
                 rotation={[0, 0, 0]}>
                 <boxGeometry args={[0.075, 1.075, 0.075]} />
-                <meshBasicMaterial color='white' />
+                <meshBasicMaterial color='glass' />
             </mesh>
             <mesh
                 position={[0, -0.5, 0]}
                 rotation={[0, 0, Math.PI / 2]}>
                 <boxGeometry args={[0.075, 1.075, 0.075]} />
-                <meshBasicMaterial color='white' />
+                <meshBasicMaterial color='glass' />
             </mesh>
             <mesh
                 position={[0, 0.5, 0]}
                 rotation={[0, 0, Math.PI / 2]}>
                 <boxGeometry args={[0.075, 1.075, 0.075]} />
-                <meshBasicMaterial color='white' />
+                <meshBasicMaterial color='glass' />
             </mesh>
         </group>
     )
 }
 
-function BuildMenu({ user, builds, currentBuildID, onBuildSelect }) {
+function BuildMenu({ builds, currentBuildID, onBuildSelect }) {
     const { viewport } = useThree()
 
-    const startXPos = -8
+    const startXPos = -10
     const startYPos = 6
 
     //const startXPos = -viewport.width / 2 + 1
@@ -197,11 +206,11 @@ function BuildMenu({ user, builds, currentBuildID, onBuildSelect }) {
     return (
         <group position={[startXPos, startYPos, 0]}>
             {
-                builds?.filter((build) => build.visibility || (user?.id && build.author === user.id)).map((build, i) => (
+                builds?.map((build, i) => (
                     <BuildIcon 
                         key={build.id}
                         id={build.id}
-                        type={build.blocks[0]?.type || "white"} 
+                        type={build.blocks[0]?.type || "glass"} 
                         index={i} 
                         onBuildSelect={(id) => onBuildSelect(id)} 
                         currentBuildID={currentBuildID} />
@@ -216,6 +225,14 @@ function BuildIcon({ id, type, index, onBuildSelect, currentBuildID }) {
     const [hovered, setHovered] = useState(false)
     const selected = currentBuildID === id
 
+    const texture = useTexture(`/block_textures/${type}.png`)
+
+    if (texture) {
+        texture.magFilter = THREE.NearestFilter
+        texture.minFilter = THREE.NearestFilter
+        texture.generateMipmaps = false;
+    }
+
     return (
         <mesh
             position={[(index % 3) * spacing, -(Math.floor(index / 3) * spacing), 0]}
@@ -226,7 +243,7 @@ function BuildIcon({ id, type, index, onBuildSelect, currentBuildID }) {
             onPointerOver={ () => setHovered(true) }
             onPointerOut={ () => setHovered(false) }>
             <boxGeometry args={[1, 1, 1]} />
-            <meshStandardMaterial color={type} />
+            <meshStandardMaterial map={texture} transparent={true} />
             { hovered && (
                 <Outlines thickness={5} color='white' />
             )}
@@ -241,7 +258,7 @@ function BuildIcon({ id, type, index, onBuildSelect, currentBuildID }) {
 function Palette({ currentBlock, onBlockSelect }) {
     const { viewport } = useThree()
     
-    const startXPos = 7
+    const startXPos = 9
     const startYPos = 6
 
     //const startXPos = viewport.width / 2 - 4
@@ -251,15 +268,15 @@ function Palette({ currentBlock, onBlockSelect }) {
 
     return (
         <group position={[startXPos, startYPos, 0]}>
-            <Block type='red' index={0} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
-            <Block type='orange' index={1} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
-            <Block type='yellow' index={2} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
-            <Block type='green' index={3} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
-            <Block type='blue' index={4} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
-            <Block type='purple' index={5} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
-            <Block type='gray' index={6} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
-            <Block type='lightgray' index={7} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
-            <Block type='white' index={8} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
+            <Block type='glass' index={0} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
+            <Block type='spruce_log' index={1} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
+            <Block type='spruce_planks' index={2} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
+            <Block type='polished_deepslate' index={3} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
+            <Block type='deepslate_bricks' index={4} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
+            <Block type='deepslate_tiles' index={5} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
+            <Block type='cobblestone' index={6} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
+            <Block type='stone' index={7} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
+            <Block type='stone_bricks' index={8} onBlockSelect={onBlockSelect} currentBlock={currentBlock} />
         </group>
     )
 }
@@ -269,6 +286,14 @@ function Block({ type, index, onBlockSelect, currentBlock }) {
     const [hovered, setHovered] = useState(false)
     const selected = currentBlock === type
     
+    const texture = useTexture(`/block_textures/${type}.png`)
+
+    if (texture) {
+        texture.magFilter = THREE.NearestFilter
+        texture.minFilter = THREE.NearestFilter
+        texture.generateMipmaps = false;
+    }
+
     return (
         <mesh
             position={[(index % 3) * spacing, -(Math.floor(index / 3) * spacing), 0]}
@@ -277,7 +302,7 @@ function Block({ type, index, onBlockSelect, currentBlock }) {
             onPointerOver={ () => setHovered(true) }
             onPointerOut={ () => setHovered(false) }>
             <boxGeometry args={[1, 1, 1]} />
-            <meshStandardMaterial color={type} />
+            <meshStandardMaterial map={texture} transparent={true}/>
             { hovered && (
                 <Outlines thickness={5} color='white' />
             )}
@@ -289,14 +314,14 @@ function Block({ type, index, onBlockSelect, currentBlock }) {
 
 }
 
-function BigHUD({ user, builds, currentBlock, onBlockSelect, currentBuildID, onBuildSelect }) {
+function BigHUD({ builds, currentBlock, onBlockSelect, currentBuildID, onBuildSelect }) {
     return (
         <Hud>
             <OrthographicCamera makeDefault position={[0, 0, 10]} zoom={50} />
             <ambientLight intensity={0.35} />
             <directionalLight position={[5, 5, 10]} intensity={1} />
             
-            <BuildMenu user={user} builds={builds} currentBuildID={currentBuildID} onBuildSelect={onBuildSelect} />
+            <BuildMenu builds={builds} currentBuildID={currentBuildID} onBuildSelect={onBuildSelect} />
             <Palette currentBlock={currentBlock} onBlockSelect={onBlockSelect} />
         </Hud>
     )
@@ -359,7 +384,7 @@ export default function App() {
         }
     }
 
-    const [currentBlock, setCurrentBlock] = useState('white')
+    const [currentBlock, setCurrentBlock] = useState('glass')
     
     const [builds, setBuilds] = useState([
         {   
@@ -375,9 +400,14 @@ export default function App() {
 
     useEffect(() => {
         async function getBuilds() {
+            const filter = user?.id 
+                ? `visibility.eq.true,author.eq.${user.id}` 
+                : 'visibility.eq.true'
+
             const { data: dataBuilds, error } = await supabase
                 .from('builds')
                 .select()
+                .or(filter)
                 .order('created_at', { ascending: true })
 
             if (error) {
@@ -390,7 +420,7 @@ export default function App() {
             }
         }
         getBuilds()
-    }, [])
+    }, [user?.id])
 
     const [title, setTitle] = useState('')
     
@@ -484,7 +514,7 @@ export default function App() {
             console.error("Error sending request: ", error)
         }
     }
-
+    
     async function sendBuild(buildOrTitle=null) {
         try {
             const isBuildObject = typeof buildOrTitle === 'object' && buildOrTitle !== null
@@ -577,7 +607,7 @@ export default function App() {
 
     return (
         <div style={{width:'100vw', height:'100vh', background:'black'}}>
-            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10, marginBottom: '1.5rem',color: 'white' }}>
+            <div style={{ position: 'absolute', top: 30, left: 30, zIndex: 10, marginBottom: '1.5rem', color: 'white' }}>
                 {authMessage && <p>{authMessage}</p>}
                 
                 <div style={{ marginBottom: '1.5rem' }}>
@@ -590,18 +620,21 @@ export default function App() {
                         <div>
                             { (loggingIn || signingUp) && <div>
                                 <input
+                                    style={{ marginRight: '8px' }}
                                     type="email" 
                                     placeholder="Email" 
                                     value={email} 
                                     onChange={(event) => setEmail(event.target.value)} 
                                 />
                                 { signingUp && <input 
+                                    style={{ marginRight: '8px' }}
                                     type="text" 
                                     placeholder="Username" 
                                     value={username} 
                                     onChange={(event) => setUsername(event.target.value)} 
                                 /> }
                                 <input 
+                                    style={{ marginRight: '8px' }}
                                     type="password" 
                                     placeholder="Password" 
                                     value={password} 
@@ -612,8 +645,9 @@ export default function App() {
                                     setSigningUp(false) 
                                     setLoggingIn(false) 
                                     setAuthMessage('') }}
+                                    style={{ marginRight: '8px' , marginTop: '0.5rem'}}
                                 >Back</button> }
-                            { !loggingIn && <button onClick={ () => signingUp ? handleSignUp() : setSigningUp(true) }>Sign Up</button> }
+                            { !loggingIn && <button style={{ marginRight: '8px' }} onClick={ () => signingUp ? handleSignUp() : setSigningUp(true) }>Sign Up</button> }
                             { !signingUp && <button onClick={ () => loggingIn ? handleLogIn() : setLoggingIn(true) }>Log In</button> }
                         </div>
                     )}
@@ -624,6 +658,7 @@ export default function App() {
                 {user ? (
                     <div>
                         <input 
+                            style={{ marginRight: '8px' }}
                             type="text" 
                             placeholder="Title" 
                             value={title}
@@ -649,7 +684,7 @@ export default function App() {
                         {editingBuild && ( 
                             <div>
                                 {currentBuild.author && (
-                                <div>
+                                <div style={{ marginTop: '1rem' }}>
                                     <label htmlFor="visibility">Creation Visibility: </label>
 
                                     <select id="visibility" value={String(currentBuild.visibility)} onChange={(event) => updateVisibility(currentBuildID, event.target.value === 'true')}>
@@ -686,7 +721,6 @@ export default function App() {
                     setBuilds={(id, blocks) => updateBuilds(id, blocks)} />
                 <OrbitControls enableZoom={true} />
                 <BigHUD 
-                    user={user}
                     builds={builds}
                     currentBlock={currentBlock} 
                     onBlockSelect={(type, button) => selectBlock(type, button)} 

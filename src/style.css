@@ -7,4 +7,17 @@
 body {
   margin: 0;
   padding: 0;
+  font-family: 'Garamond', serif;
+  font-size: 20px;
+}
+
+button, input, select, option {
+  background-color: rgba(205, 236, 255, 0.9);
+
+  font-family: 'Garamond', serif;
+  font-size: 18px;
+
+  border: none;
+  padding: 3px 6px;
+  border-radius: 2px;
 }
